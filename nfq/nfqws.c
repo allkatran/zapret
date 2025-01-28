@@ -1025,9 +1025,19 @@ static void onetime_tls_mod(struct desync_profile *dp)
 	}
 	if (dp->fake_tls_mod & FAKE_TLS_MOD_RND_SNI)
 	{
-		if (!TLSFindExt(dp->fake_tls,dp->fake_tls_size,0,&ext,&extlen,false) || !TLSAdvanceToHostInSNI(&ext,&extlen,&slen))
+		if (!TLSFindExt(dp->fake_tls,dp->fake_tls_size,0,&ext,&extlen,false))
 		{
-			DLOG_ERR("profile %d rndsni set but tls fake structure invalid or does not have SNI\n", dp->n);
+			DLOG_ERR("profile %d rndsni set but tls fake does not have SNI\n", dp->n);
+			exit_clean(1);
+		}
+		if (!TLSAdvanceToHostInSNI(&ext,&extlen,&slen))
+		{
+			DLOG_ERR("profile %d rndsni set but tls fake has invalid SNI structure\n", dp->n);
+			exit_clean(1);
+		}
+		if (!slen)
+		{
+			DLOG_ERR("profile %d rndsni set but tls fake has zero sized SNI\n", dp->n);
 			exit_clean(1);
 		}
 		uint8_t *sni = dp->fake_tls + (ext - dp->fake_tls);
@@ -1035,7 +1045,7 @@ static void onetime_tls_mod(struct desync_profile *dp)
 		char *s1=NULL, *s2=NULL;
 		if (params.debug)
 		{
-			if (s1 = malloc(slen+1))
+			if ((s1 = malloc(slen+1)))
 			{
 				memcpy(s1,sni,slen); s1[slen]=0;
 			}
@@ -1048,7 +1058,7 @@ static void onetime_tls_mod(struct desync_profile *dp)
 			sni[slen-4] = '.';
 			memcpy(sni+slen-3,tld[random()%(sizeof(tld)/sizeof(*tld))],3);
 		}
-		else if (slen>=1)
+		else
 			fill_random_az09(sni+1,slen-1);
 
 		if (params.debug)
@@ -1281,7 +1291,7 @@ static void exithelp(void)
 		" --dpi-desync-any-protocol=0|1\t\t\t; 0(default)=desync only http and tls  1=desync any nonempty data packet\n"
 		" --dpi-desync-fake-http=<filename>|0xHEX\t; file containing fake http request\n"
 		" --dpi-desync-fake-tls=<filename>|0xHEX\t\t; file containing fake TLS ClientHello (for https)\n"
-		" --dpi-desync-fake-tls-mod=mod[,mod]\t\t; comma list of TLS fake mods. available mods : none,rnd,rndsni,padencap\n"
+		" --dpi-desync-fake-tls-mod=mod[,mod]\t\t; comma separated list of TLS fake mods. available mods : none,rnd,rndsni,padencap\n"
 		" --dpi-desync-fake-unknown=<filename>|0xHEX\t; file containing unknown protocol fake payload\n"
 		" --dpi-desync-fake-syndata=<filename>|0xHEX\t; file containing SYN data payload\n"
 		" --dpi-desync-fake-quic=<filename>|0xHEX\t; file containing fake QUIC Initial\n"
