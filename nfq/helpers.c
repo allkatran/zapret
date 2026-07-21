@@ -221,7 +221,8 @@ void print_sockaddr(const struct sockaddr *sa)
 
 bool pton4_port(const char *s, struct sockaddr_in *sa)
 {
-	char ip[16],*p;
+	char ip[16];
+	const char *p;
 	size_t l;
 	unsigned int u;
 
@@ -241,7 +242,8 @@ bool pton4_port(const char *s, struct sockaddr_in *sa)
 }
 bool pton6_port(const char *s, struct sockaddr_in6 *sa)
 {
-	char ip[40],*p;
+	char ip[40];
+	const char *p;
 	size_t l;
 	unsigned int u;
 
